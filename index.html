@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>in Rep</title>
+    <link rel="icon" href="https://onedrive.live.com/personal/c0c7ba23d84feb86/Documents/image/game%20port%20folio.png" type="image/svg+xml">
+    <!-- Tailwind CSS CDNの読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Interフォントを優先し、日本語フォントをフォールバックに設定 */
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #121212; /* 非常に濃いダークグレー */
+            color: #e5e7eb; /* 明るいテキスト色 */
+        }
+        /* スクロールバーのスタイルをカスタマイズ */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #06b6d4; /* プライマリカラーの明るい色 (Cyan) */
+            border-radius: 10px;
+        }
+        /* フィルターボタンのアクティブ状態 */
+        .filter-button.active {
+            background-color: #06b6d4; /* より明るいCyan */
+            color: black; /* テキストを黒にしてコントラストを確保 */
+            box-shadow: 0 4px 6px -1px rgba(6, 182, 212, 0.3), 0 2px 4px -2px rgba(6, 182, 212, 0.1);
+        }
+        /* 背景スクロール停止用 */
+        .overflow-hidden {
+            overflow: hidden;
+        }
+
+        /* --- カスタムアニメーションの定義 --- */
+        
+        /* 下からフェードイン (subtitle, button用) */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* 左からスライドイン (hero-title用) */
+        @keyframes slideInFromLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-100px); /* 左から100pxの位置からスタート */
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* アニメーションクラス */
+        .animate-fadeInUp {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0; /* 初期状態を非表示にする */
+        }
+        .animate-slideInFromLeft {
+            animation: slideInFromLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; /* 動きを滑らかに */
+            opacity: 0; /* 初期状態を非表示にする */
+        }
+        
+        /* ホバー時のシャドウ強調 (ダークモードではグロー効果に) */
+        .card-hover:hover {
+            /* 濃い背景で映えるシアンのグロー効果 */
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.6); 
+        }
+    </style>
+    <script>
+        // Tailwindの設定（カスタムカラーの定義）
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-cyan': '#06b6d4', /* Main Accent Cyan */
+                        'accent-light': '#67e8f9', /* Light Cyan Accent (for tags) */
+                        'primary-dark': '#1f2937', /* Dark Card/Section BG */
+                        'dark-bg': '#121212', /* Super Dark Background */
+                    },
+                }
+            }
+        }
+
+        // --- ゲームデータ定義 ---
+        // ★genreフィールドを文字列の配列に変更しました
+        const gameData = [
+            {
+                id: 5,
+                title: "N battle-黒-",
+                description: "ー友達とCPUと。数字を巡る、究極の頭脳戦ー",
+                longDescription: "友達と2〜4人でスコアを競うか、難易度3段階のCPUに挑むか。ヒントは「上」か「下」か。運とロジックを駆使し、合計試行回数が最も少ない数字当てマスターを目指せ！究極の頭脳戦が今、始まる！（ダークモード）",
+                genre: ["バトル", "ミニゲーム"], // ★マルチジャンル
+                platform: "PC, Mobile" ,
+                link: "https://libuon76.github.io/number_d/",
+                image: "https://onedrive.live.com/personal/c0c7ba23d84feb86/Documents/image/N%20bittle-%E9%BB%92-.png",
+                releaseDate: "2025年05月",
+                customTags: ["数字", "マルチプレイ","ダークモード"], 
+                isFeatured: true, 
+            },
+            {
+                id: 4,
+                title: "N battle-白-",
+                description: "ー友達とCPUと。数字を巡る、究極の頭脳戦ー",
+                longDescription: "友達と2〜4人でスコアを競うか、難易度3段階のCPUに挑むか。ヒントは「上」か「下」か。運とロジックを駆使し、合計試行回数が最も少ない数字当てマスターを目指せ！究極の頭脳戦が今、始まる！（ライトモード）",
+                genre: ["バトル", "ミニゲーム"], // ★マルチジャンル
+                platform: "PC, Mobile",
+                link: "https://libuon76.github.io/number_l/",
+                image: "https://onedrive.live.com/personal/c0c7ba23d84feb86/Documents/image/N%20bittle-%E7%99%BD-.png",
+                releaseDate: "2023年11月",
+                customTags: ["数字", "マルチプレイ", "ライトモード"], 
+            },
+            {
+                id: 3,
+                title: "魔王城建設シミュレーション",
+                description: "魔王として、勇者の侵入を防ぐためのダンジョンを設計・構築・強化する戦略シミュレーションゲーム。",
+                longDescription: "資源を管理し、トラップを配置し、モンスターを育成して、最強の魔王城を作り上げるタワーディフェンス＆経営シミュレーション。あなたの戦略次第で、勇者は一歩も進めません。",
+                genre: ["シミュレーション", "ストラテジー"], // ★マルチジャンル
+                platform: "PC",
+                link: "https://example.com/dungeon-builder",
+                image: "https://placehold.co/400x225/f87171/ffffff?text=Dungeon+Builder",
+                releaseDate: "2024年05月",
+                customTags: ["タワーディフェンス", "経営", "ダークファンタジー", "戦略"], 
+                isFeatured: true, 
+            },
+            {
+                id: 2,
+                title: "ピクセル・ランナー",
+                description: "レトロなピクセルアートが特徴のハイスピードな横スクロールアクションゲーム。",
+                longDescription: "指一本で操作できるシンプルなランニングゲームですが、難易度はハードコア！完璧なタイミングでジャンプし、障害物を避けながらどこまで走り続けられるかチャレンジしましょう。",
+                genre: ["アクション", "カジュアル"], // ★マルチジャンル
+                platform: "Mobile",
+                link: "https://example.com/pixel-runner",
+                image: "https://placehold.co/400x225/34d399/ffffff?text=Pixel+Runner",
+                releaseDate: "2022年08月",
+                customTags: ["ハイパーカジュアル", "高難易度", "レトロ"], 
+            },
+            {
+                id: 1,
+                title: "星屑フロンティア",
+                description: "広大な宇宙を舞台にした探索型RPGです。未開の惑星を巡り、古代文明の謎を解き明かしましょう。",
+                longDescription: "数百もの星系を自由に飛び回り、個性的なクルーを仲間に加え、物語を進めるスペースオペラRPG。戦闘は戦略的なターン制で、奥深いスキルビルドが楽しめます。",
+                genre: ["RPG", "SF"], // ★マルチジャンル
+                platform: "PC, Mobile",
+                link: "https://example.com/star-frontier",
+                image: "https://placehold.co/400x225/60a5fa/ffffff?text=Star+Frontier",
+                releaseDate: "2021年12月",
+                customTags: ["SF", "広大な世界", "ターン制バトル", "戦略"], 
+            }
+        ];
+        // --------------------------------
+
+        // --- 利用規約のコンテンツ定義 (ゲーム詳細モーダルに注入するためにHTMLとして定義) ---
+        // **** ユーザーは、ここの内容を編集することで利用規約を更新できます ****
+        const TERMS_AND_CONDITIONS_CONTENT = `
+            <div class="p-6 md:p-8 bg-gray-900 rounded-2xl">
+                <h2 class="text-4xl font-extrabold text-primary-cyan mb-8 border-b-4 border-primary-cyan pb-4" id="modal-title">まとめサイト「in Rep」および掲載ゲームの利用規約</h2>
+
+                <p class="text-sm text-gray-400 mb-8 italic">
+                    本規約は、2025年9月1日に制定され、即日発効するものとします。（最終更新：2025年9月28日）
+                </p>
+
+                <section class="space-y-8">
+                    
+                    <div class="space-y-4">
+                        <h3 class="text-2xl font-bold border-l-4 border-gray-600 pl-3 text-white">第1条（適用範囲と定義）</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            本規約は、Libu0n（以下「**当方**」といいます。）が提供・運営するウェブサイト「in Rep」（以下「**本サイト**」といいます。）および、本サイトに掲載されているすべてのゲーム、情報、その他一切のコンテンツ（以下「**本コンテンツ**」といいます。）の利用に関する一切に適用されます。
+                        </p>
+                        <p class="text-gray-300 leading-relaxed">
+                            「**利用者**」とは、本サイトを閲覧、利用するすべての者を指します。
+                        </p>
+                        <p class="text-gray-300 leading-relaxed">
+                            利用者は、本サイトの利用をもって本規約に同意したものとみなします。
+                        </p>
+                    </div>
+
+                    <div class="space-y-4 pt-6">
+                        <h3 class="text-2xl font-bold border-l-4 border-gray-600 pl-3 text-white">第2条（AI技術の利用とコンテンツの特性）</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            本サイトおよび本コンテンツの**すべて（ゲームシステム、グラフィック、文章、まとめ情報等）**は、Google Gemini AI技術を含むAI技術の支援を受けて開発・生成されています。
+                        </p>
+                        <p class="text-gray-300 leading-relaxed">
+                            当方は、AI技術の利用により発生する可能性のある著作権上の疑義や、コンテンツの独自性、情報の正確性について一切の保証を行いません。利用者はこの特性を理解し、自己の責任において本サイトおよび本コンテンツを利用するものとします。
+                        </p>
+                    </div>
+                    
+                    <div class="space-y-4 pt-6">
+                        <h3 class="text-2xl font-bold border-l-4 border-gray-600 pl-3 text-white">第3条（知的財産権）</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            本サイトおよび本コンテンツに関する著作権、商標権、その他すべての知的財産権は、**当方（Libu0n）**に帰属します。
+                        </p>
+                        <p class="text-gray-300 leading-relaxed">
+                            利用者は、当方の事前の書面による許可なく、本コンテンツの複製、改変、二次利用（第5条に定める許諾の範囲を除く）、頒布、公衆送信その他一切の行為を行うことはできません。
+                        </p>
+                    </div>
+                    
+                    <div class="space-y-4 pt-6">
+                        <h3 class="text-2xl font-bold border-l-4 border-gray-600 pl-3 text-white">第4条（禁止事項）</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            利用者は、本サイトおよび本コンテンツの利用にあたり、以下の行為を行ってはならないものとします。
+                        </p>
+                        <ul class="list-disc list-inside text-gray-300 ml-6 space-y-2">
+                            <li>法令または公序良俗に違反する行為、またはそのおそれのある行為。</li>
+                            <li>犯罪行為に関連する行為、またはそのおそれのある行為。</li>
+                            <li>本サイトのサーバーまたはネットワークの機能を破壊したり、妨害したりする行為。</li>
+                            <li>他の利用者、当方、または第三者の権利（著作権、肖像権、プライバシー、名誉など）を侵害する行為。</li>
+                            <li>本コンテンツを営利目的で利用する行為（第5条で別途定める動画投稿による収益化を除きます）。</li>
+                            <li>**本コンテンツのバグや不具合を意図的に利用する行為。**</li>
+                            <li>その他、当方が不適切と判断する行為。</li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-4 pt-6">
+                        <h3 class="text-2xl font-bold border-l-4 border-gray-600 pl-3 text-white">第5条（プレイ動画・配信投稿に関する規定（二次利用の許諾））</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            利用者は、本サイトに掲載されているゲームの内容をプレイした動画、スクリーンショット、または配信（以下「**プレイ動画等**」といいます。）を、無許可で作成し、ウェブサイトやSNS、動画プラットフォーム等へ投稿することを許可します。
+                        </p>
+                        <p class="text-gray-300 leading-relaxed">
+                            プレイ動画等の投稿により得られる収益（広告収入など）は、利用者が受け取ることができます。
+                        </p>
+                        <p class="text-gray-300 font-semibold mt-4">ただし、プレイ動画等は、以下の事項を遵守して作成および投稿されるものとします。</p>
+                        <ol class="list-decimal list-inside text-gray-300 ml-6 space-y-2">
+                            <li>**本サイト名（in Rep）および制作者名（Libu0n）**を明確に記載すること。</li>
+                            <li>プレイ動画等の内容が本規約第4条（禁止事項）に定める行為に該当しないこと。特に、本コンテンツを犯罪行為に利用したり、公序良俗に反する内容を付加したりする行為を固く禁止します。</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="space-y-4 pt-6">
+                        <h3 class="text-2xl font-bold border-l-4 border-gray-600 pl-3 text-white">第6条（免責事項）</h3>
+                        <h4 class="text-xl font-semibold text-primary-cyan mt-4">コンテンツの瑕疵（かし）に関する免責</h4>
+                        <p class="text-gray-300 leading-relaxed">
+                            当方は、本サイトおよび本コンテンツに、事実上または法律上の瑕疵（安全性、正確性、完全性、特定の目的への適合性、エラーやバグ、権利侵害など）がないことを明示的にも黙示的にも保証しておりません。
+                        </p>
+                        <h4 class="text-xl font-semibold text-primary-cyan mt-4">損害賠償の制限</h4>
+                        <p class="text-gray-300 leading-relaxed">
+                            当方は、本サイトまたは本コンテンツの利用に起因して利用者に生じたあらゆる損害について、当方の故意または重過失による場合を除き、一切の責任を負いません。
+                        </p>
+                        <h4 class="text-xl font-semibold text-primary-cyan mt-4">外部サイトに関する免責</h4>
+                        <p class="text-gray-300 leading-relaxed">
+                            本サイトからリンクされている外部サイト（他社ゲームサイト等）の安全性や合法性、それらが提供する情報の正確性について、当方は一切の責任を負いません。
+                        </p>
+                        <h4 class="text-xl font-semibold text-primary-cyan mt-4">無料サービスとしての免責</h4>
+                        <p class="text-gray-300 leading-relaxed">
+                            本サービスは無料で提供されており、当方は、本サービスの提供の中断、停止、終了、利用不能などによって生じた利用者の損害について、一切の責任を負いません。
+                        </p>
+                    </div>
+
+                    <div class="space-y-4 pt-6">
+                        <h3 class="text-2xl font-bold border-l-4 border-gray-600 pl-3 text-white">第7条（準拠法および合意管轄）</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            本規約の解釈にあたっては、日本法を準拠法とします。
+                        </p>
+                        <p class="text-gray-300 leading-relaxed">
+                            本サービスに関して紛争が生じた場合には、当方（Libu0n）の所在地を管轄する裁判所を専属的合意管轄とします。
+                        </p>
+                    </div>
+                </section>
+
+                <div class="mt-12 pt-6 border-t border-gray-700 text-center">
+                    <p class="text-sm text-gray-500">
+                        本規約に関するご質問は、お問い合わせ窓口までご連絡ください。
+                    </p>
+                </div>
+            </div>
+        `;
+        // --------------------------------
+
+        // ★ジャンル抽出ロジックの更新: すべてのジャンル配列を展開してユニークなリストを作成
+        const allGenres = [...new Set(gameData.flatMap(game => game.genre))];
+        const allTags = [...new Set(gameData.flatMap(game => game.customTags || []))];
+        const allFilters = ["すべて", ...allGenres, ...allTags];
+
+        let selectedFilter = "すべて";
+        
+        // ページ読み込み完了後に初期設定を行う
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFilters();
+            renderGameCards();
+            setupModalListeners();
+
+            // アニメーションを適用
+            document.querySelector('#hero-title').classList.add('animate-slideInFromLeft');
+            document.querySelector('#hero-subtitle').classList.add('animate-fadeInUp');
+            // カードはJSでレンダリング後に適用
+        });
+        
+        /**
+         * モーダルウィンドウの表示/非表示を切り替える
+         * @param {boolean} show - trueで表示、falseで非表示
+         * @param {number} gameId - 表示するゲームのID (利用規約の場合は0)
+         */
+        function toggleModal(show, gameId = 0) {
+            const modal = document.getElementById('game-detail-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            if (show) {
+                // 利用規約を表示する場合
+                if (gameId === 0) {
+                    modalContent.innerHTML = TERMS_AND_CONDITIONS_CONTENT;
+                    document.getElementById('play-game-btn-container').innerHTML = ''; // ボタンを非表示にする
+                    document.getElementById('modal-title').textContent = "利用規約";
+                    // スクロールを有効にする
+                    document.querySelector('body').classList.remove('overflow-hidden'); 
+                    modal.classList.remove('hidden');
+                } else {
+                    // ゲーム詳細を表示する場合
+                    const game = gameData.find(g => g.id === gameId);
+                    if (game) {
+                        modalContent.innerHTML = createGameDetailContent(game);
+                        document.getElementById('modal-title').textContent = game.title;
+                        
+                        // プレイボタン
+                        document.getElementById('play-game-btn-container').innerHTML = `
+                            <a href="${game.link}" target="_blank" rel="noopener noreferrer" 
+                                class="inline-flex justify-center w-full rounded-xl border border-transparent 
+                                px-6 py-3 text-lg font-bold shadow-lg 
+                                bg-primary-cyan text-gray-900 
+                                hover:bg-accent-light transition duration-300 transform hover:scale-105">
+                                ゲームをプレイ！ (外部サイトへ)
+                            </a>
+                        `;
+                        // 背景のスクロールを止める
+                        document.querySelector('body').classList.add('overflow-hidden'); 
+                        modal.classList.remove('hidden');
+                    }
+                }
+            } else {
+                // モーダルを閉じる
+                modal.classList.add('hidden');
+                // 背景のスクロール制限を解除
+                document.querySelector('body').classList.remove('overflow-hidden');
+            }
+        }
+
+        /** モーダル内のコンテンツを作成する */
+        function createGameDetailContent(game) {
+            const tagsHtml = [...game.genre, ...(game.customTags || [])].map(tag => `
+                <span class="inline-block bg-primary-dark rounded-full px-3 py-1 text-sm font-semibold text-accent-light border border-accent-light/50">
+                    #${tag}
+                </span>
+            `).join('');
+
+            return `
+                <div class="space-y-6">
+                    <img src="${game.image}" alt="${game.title}のスクリーンショット" class="w-full h-auto object-cover rounded-xl border border-primary-cyan/50" onerror="this.onerror=null; this.src='https://placehold.co/600x338/555555/ffffff?text=${encodeURIComponent(game.title)}';">
+                    
+                    <div class="text-sm text-gray-400 font-medium">
+                        <span class="mr-4">リリース日: ${game.releaseDate}</span>
+                        <span>プラットフォーム: ${game.platform}</span>
+                    </div>
+
+                    <p class="text-xl font-semibold text-white">${game.description}</p>
+                    
+                    <p class="text-gray-300 leading-relaxed whitespace-pre-wrap">${game.longDescription}</p>
+
+                    <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-700">
+                        ${tagsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        /** モーダルのイベントリスナーを設定する */
+        function setupModalListeners() {
+            document.getElementById('modal-backdrop').addEventListener('click', () => toggleModal(false));
+            document.getElementById('close-modal-btn').addEventListener('click', () => toggleModal(false));
+            
+            // 利用規約リンク
+            document.getElementById('terms-link-header').addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleModal(true, 0); // 0は利用規約を示す
+            });
+            document.getElementById('terms-link-footer').addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleModal(true, 0); // 0は利用規約を示す
+            });
+
+            // ESCキーで閉じる
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !document.getElementById('game-detail-modal').classList.contains('hidden')) {
+                    toggleModal(false);
+                }
+            });
+        }
+
+        /** フィルタボタンを初期化する */
+        function initializeFilters() {
+            const filterContainer = document.getElementById('filter-container');
+            
+            // すべてのフィルターボタンを生成
+            allFilters.forEach((filter, index) => {
+                const button = document.createElement('button');
+                button.textContent = filter;
+                button.className = `filter-button text-sm font-semibold py-2 px-4 rounded-full transition duration-200 border border-primary-cyan/50 hover:bg-primary-cyan/70 hover:text-gray-900 ${filter === selectedFilter ? 'active' : 'text-primary-cyan'}`;
+                button.setAttribute('data-filter', filter);
+                
+                // 初期のアニメーションディレイ
+                button.style.animationDelay = `${0.3 + index * 0.05}s`;
+                button.classList.add('animate-fadeInUp');
+
+                button.addEventListener('click', () => {
+                    selectedFilter = filter;
+                    // アクティブクラスの切り替え
+                    document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('active', 'text-gray-900'));
+                    button.classList.add('active', 'text-gray-900');
+                    renderGameCards();
+                });
+                filterContainer.appendChild(button);
+            });
+        }
+
+        /** ゲームカードをフィルタリングして描画する */
+        function renderGameCards() {
+            const container = document.getElementById('game-cards-container');
+            container.innerHTML = '';
+            
+            // フィルタリングロジック
+            const filteredGames = gameData.filter(game => {
+                if (selectedFilter === "すべて") {
+                    return true;
+                }
+                // ジャンルまたはカスタムタグにフィルターが含まれているかチェック
+                const tagsAndGenres = [...game.genre, ...(game.customTags || [])];
+                return tagsAndGenres.includes(selectedFilter);
+            });
+            
+            if (filteredGames.length === 0) {
+                container.innerHTML = `<p class="text-xl text-gray-500 col-span-full text-center py-10">該当するゲームが見つかりませんでした。</p>`;
+                return;
+            }
+
+            // カードの描画
+            filteredGames.forEach((game, index) => {
+                const card = createGameCard(game, index);
+                container.appendChild(card);
+            });
+        }
+
+        /** 個々のゲームカードを作成する */
+        function createGameCard(game, index) {
+            const card = document.createElement('div');
+            // Tailwind CSS クラスを適用してレスポンシブなカードを作成
+            card.className = `bg-primary-dark rounded-xl shadow-2xl overflow-hidden transform transition duration-300 card-hover
+                             col-span-12 sm:col-span-6 lg:col-span-4 xl:col-span-3 
+                             cursor-pointer animate-fadeInUp`;
+            card.style.animationDelay = `${0.5 + index * 0.1}s`;
+            
+            const tagsHtml = game.genre.map(tag => `<span class="inline-block bg-gray-700/50 rounded-full px-3 py-1 text-xs font-medium text-accent-light">${tag}</span>`).join('');
+
+            card.innerHTML = `
+                <!-- 画像エリア -->
+                <div class="aspect-video overflow-hidden border-b border-primary-cyan/20">
+                    <img src="${game.image}" alt="${game.title}" 
+                         class="w-full h-full object-cover transform hover:scale-105 transition duration-500"
+                         onerror="this.onerror=null; this.src='https://placehold.co/600x338/374151/ffffff?text=${encodeURIComponent(game.title)}';"
+                    >
+                </div>
+                
+                <!-- 詳細エリア -->
+                <div class="p-4 space-y-3">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-xl font-bold text-white leading-snug">${game.title}</h3>
+                        ${game.isFeatured ? '<span class="text-xs font-bold text-primary-dark bg-primary-cyan rounded-full px-3 py-1 shadow-lg">注目！</span>' : ''}
+                    </div>
+                    
+                    <p class="text-sm text-gray-400 h-10 overflow-hidden">${game.description}</p>
+                    
+                    <div class="flex flex-wrap gap-1">
+                        ${tagsHtml}
+                    </div>
+                    <div class="text-xs text-gray-500 pt-2 border-t border-gray-700">
+                        ${game.platform} | ${game.releaseDate}
+                    </div>
+                </div>
+            `;
+
+            // カードクリックでモーダルを表示
+            card.addEventListener('click', () => toggleModal(true, game.id));
+            
+            return card;
+        }
+
+    </script>
+</head>
+<body>
+    
+    <!-- ヘッダー (ナビゲーション) -->
+    <header class="sticky top-0 z-40 bg-dark-bg/95 backdrop-blur-sm border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- ロゴ/サイト名 -->
+                <a href="#" class="text-3xl font-extrabold text-white tracking-widest">
+                    <span class="text-primary-cyan">in</span> Rep.
+                </a>
+                
+                <!-- ナビゲーションリンク (モバイルでは非表示) -->
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#portfolio" class="text-gray-300 hover:text-primary-cyan transition duration-150 font-medium">ゲーム一覧</a>
+                    <a href="#about" class="text-gray-300 hover:text-primary-cyan transition duration-150 font-medium">開発者について</a>
+                    <a href="#" id="terms-link-header" class="text-gray-300 hover:text-primary-cyan transition duration-150 font-medium">利用規約</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        
+        <!-- ヒーローセクション -->
+        <section class="py-20 text-center">
+            <h1 id="hero-title" class="text-6xl sm:text-7xl font-extrabold mb-4 text-white">
+                AIが創る、<span class="text-primary-cyan">新しいゲーム</span>のカタチ
+            </h1>
+            <p id="hero-subtitle" class="text-xl sm:text-2xl text-gray-400 mb-10 mt-6 animate-fadeInUp" style="animation-delay: 0.5s;">
+                マルチジャンル対応のインディーゲームポートフォリオサイト「in Rep.」
+            </p>
+        </section>
+
+        <!-- フィルタリングエリア -->
+        <section id="portfolio" class="pt-10 mb-12">
+            <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-3">ゲームライブラリ</h2>
+            <div id="filter-container" class="flex flex-wrap gap-3">
+                <!-- フィルタボタンがJSによってここに挿入されます -->
+            </div>
+        </section>
+
+        <!-- ゲームカードコンテナ -->
+        <section>
+            <div id="game-cards-container" class="grid grid-cols-12 gap-6">
+                <!-- ゲームカードがJSによってここに挿入されます -->
+            </div>
+        </section>
+        
+        <!-- 開発者紹介セクション -->
+        <section id="about" class="pt-20">
+            <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-3">ゲーム情報</h2>
+            <div class="bg-primary-dark p-6 sm:p-8 rounded-xl shadow-2xl border border-primary-cyan/20">
+                <div class="md:flex md:space-x-8 items-center">
+                    
+                    <div class="space-y-4">
+                        <h3 class="text-2xl font-bold text-primary-cyan">Libu0n (インディー開発者)</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            AI技術（特にGoogle Gemini）を活用し、コンセプト立案からプロトタイプ開発までをスピーディに行うことに情熱を注いでいます。インディーゲーム開発の可能性を広げ、多様なジャンルのゲームを皆様に提供できるよう日々挑戦しています。
+                        </p>
+                        <div class="flex space-x-4 text-sm">
+                            <a href="https://github.com/libuon76" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition">GitHub</a>
+                            <a href="#" class="text-gray-400 hover:text-white transition">お問い合わせ</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <!-- モーダルウィンドウ (ゲーム詳細 & 利用規約) -->
+    <div id="game-detail-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        
+        <!-- モーダルの背景 (クリックで閉じる) -->
+        <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-80 transition-opacity"></div>
+        
+        <!-- モーダルパネル -->
+        <div class="flex items-center justify-center min-h-screen p-4 sm:p-0">
+            <div class="relative bg-gray-800 rounded-2xl shadow-3xl transform transition-all my-8 max-w-2xl w-full border-2 border-primary-cyan/50">
+                
+                <!-- 閉じるボタン -->
+                <button id="close-modal-btn" type="button" 
+                        class="absolute top-4 right-4 text-gray-300 hover:text-primary-cyan transition duration-150 p-2 rounded-full bg-gray-700/80 z-20">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <!-- モーダルの中身 -->
+                <div class="p-6 sm:p-8 space-y-6">
+                    <!-- タイトル (JSで上書きされる) -->
+                    <h2 class="text-3xl font-extrabold text-primary-cyan border-b border-gray-700 pb-3" id="modal-title"></h2>
+                    
+                    <!-- コンテンツエリア (JSで上書きされる) -->
+                    <div id="modal-content" class="max-h-[70vh] overflow-y-auto pr-2">
+                        <!-- ゲームの詳細または利用規約がここに表示されます -->
+                    </div>
+
+                    <!-- プレイボタンエリア (利用規約の場合は空になる) -->
+                    <div id="play-game-btn-container" class="mt-6">
+                        <!-- ボタンがJSによってここに挿入されます -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="bg-primary-dark border-t border-gray-700 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:flex md:items-center md:justify-between">
+            <div class="flex justify-center space-x-6 md:order-2">
+                <!-- ソーシャルリンクなど（ダミー） -->
+                <a href="https://github.com/libuon76" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-primary-cyan">
+                    <span class="sr-only">GitHub</span>
+                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.83 9.504.5.092.682-.217.682-.483 0-.237-.008-.887-.015-1.745-2.78 605c-.958.397-1.157-.96-.465-1.157.755-.515 1.844-.972 2.652-.663 2.052 1.25 3.255.452 3.255.452 1.353-.306 2.052-1.355 2.052-1.355.132-.338.547-.643.83-.984.665-.826 1.05-1.87 1.05-3.003 0-2.34-1.115-3.213-2.656-3.79.52-.44.97-1.11.97-1.95s-.45-1.5-.97-1.95c.535-1.545-.198-2.69-1.9-2.935-.935-.125-1.98-.19-2.65-.245-.58-.045-1.2-.07-1.8-.07-.6 0-1.2.025-1.8.07-1.8.055-2.735 1.4-1.9 2.935-.52.45-.97 1.12-.97 1.95s.45 1.5 1.05 2.05c-1.54 0-2.656.873-2.656 3.79 0 1.133.385 2.177 1.05 3.003.283.341.698.646.83.984 0 0 .7.05 1.355-.306.495-.157.97-.45 1.355-.774 1.355.452 2.052 1.355 2.052 1.355s1.203.798 3.255-.452c.808-.31 1.9-.768 2.652-.663.692.197 0 1.554.465 1.157C21.135 20.197 24 16.442 24 12.017 24 6.484 19.523 2 14 2H12z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+            </div>
+            <div class="mt-8 md:mt-0 md:order-1">
+                <p class="text-center text-sm text-gray-400">
+                    &copy; 2025 <span class="font-bold text-primary-cyan">in Rep.</span> All rights reserved. | 
+                    <a href="#" id="terms-link-footer" class="text-gray-400 hover:text-white transition duration-150">利用規約</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
